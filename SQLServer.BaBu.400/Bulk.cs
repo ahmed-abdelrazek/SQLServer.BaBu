@@ -8,10 +8,10 @@ namespace SQLServer.BaBu
     public class Bulk
     {
         /// <summary>
-        /// Excute SQL Script from string
+        /// Execute SQL Script from string
         /// </summary>
         /// <param name="connection">The connection string for the sqlserver database</param>
-        /// <param name="script">The SQL string to excute</param>
+        /// <param name="script">The SQL string to execute</param>
         public static void FromScript(string connection, string script)
         {
             using (SqlConnection conn = new SqlConnection(connection))
@@ -23,10 +23,10 @@ namespace SQLServer.BaBu
         }
 
         /// <summary>
-        /// Excute SQL Script from file
+        /// Execute SQL Script from file
         /// </summary>
         /// <param name="connection">The connection string for the sqlserver database</param>
-        /// <param name="fileName">The full path to the file that have the SQL string to excute</param>
+        /// <param name="fileName">The full path to the file that have the SQL string to execute</param>
         public static void FromFile(string connection, string fileName)
         {
             using (SqlConnection conn = new SqlConnection(connection))
