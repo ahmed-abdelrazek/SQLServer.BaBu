@@ -26,7 +26,7 @@ namespace SQLServer.BaBu
                         command.ExecuteNonQuery();
                     });
                 }
-                query = $"USE master RESTORE DATABASE [{database}] FROM DISK='{fileName}' WITH  FILE = 1,  NOUNLOAD,  STATS = 10";
+                query = $"USE master RESTORE DATABASE [{database}] FROM DISK='{fileName}' WITH REPLACE;";
                 using (var command = new SqlCommand(query, connection))
                 {
                     await Task.Run(() =>
