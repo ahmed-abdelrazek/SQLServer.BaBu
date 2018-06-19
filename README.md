@@ -1,0 +1,13 @@
+# SQLServer.BaBu
+SQLServer Backup and Bulk.
+
+1- Taking backups for a database and restoring them.
+
+2- Execute bulk SQLServers commands (create - insert - update - delete - alter ...etc) for example to help create and/or update your datebase if you are using ado.net or entity framework database first.
+
+
+## SQLServer.BaBu.400
+Using dot Net Framework 4.0 and Management Studio 2008 libraries it should work with Windows XP SP3 and later.
+
+## SQLServer.BaBu.462
+Using dot Net Framework 4.6.2 and Management Studio 2017 libraries it should work with Windows 7 and later.
