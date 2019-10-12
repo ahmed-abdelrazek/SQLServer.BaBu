@@ -1,4 +1,6 @@
-﻿using System.Data.SqlClient;
+﻿using System;
+using System.Data.SqlClient;
+using System.IO;
 
 namespace SQLServer.BaBu
 {
@@ -45,12 +47,24 @@ namespace SQLServer.BaBu
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
             using (var connection = new SqlConnection(conn))
             {
-                var query = $"BACKUP DATABASE [{sqlConStrBuilder.InitialCatalog}] TO DISK='{fileName}'";
+                //creates the backup file in your windows root path in the temp folder to avoid any access issues normally C:\temp\
+                string tempFolder = $"{ Path.GetPathRoot(Environment.SystemDirectory)}temp";
+                if (!Directory.Exists(tempFolder))
+                {
+                    Directory.CreateDirectory(tempFolder);
+                }
+                string backupfile = $"{tempFolder}\\Backup { DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss tt")}.bak";
+
+                string query = $"BACKUP DATABASE [{sqlConStrBuilder.InitialCatalog}] TO DISK='{backupfile}'";
+
                 using (var command = new SqlCommand(query, connection))
                 {
                     connection.Open();
                     command.ExecuteNonQuery();
                 }
+
+                //moves the bakcup file from temp folder to the chosen location and name
+                File.Move(backupfile, fileName);
             }
         }
     }
