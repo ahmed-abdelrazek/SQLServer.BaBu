@@ -11,3 +11,8 @@ Using dot Net Framework 4.0 and Management Studio 2008 libraries it should work 
 
 ## SQLServer.BaBu.462
 Using dot Net Framework 4.6.2 and Management Studio 2017 libraries it should work with Windows 7 and later.
+
+
+## Note
+You don't need any libraries to use the backup class just copy it's code to your project and it's done
+it's only needed for the bulk class
