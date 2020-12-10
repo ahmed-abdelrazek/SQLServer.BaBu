@@ -14,31 +14,30 @@ namespace SQLServer.BaBu
         public static void Restore(string conn, string fileName)
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
-            var database = sqlConStrBuilder.InitialCatalog;
-            string query = null;
+
             using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
             {
-                query = $"ALTER DATABASE [{database}] SET Single_User WITH Rollback Immediate";
-                using (var command = new SqlCommand(query, connection))
+                if (connection.State == System.Data.ConnectionState.Closed)
                 {
                     connection.Open();
-                    command.ExecuteNonQuery();
                 }
-                query = $"USE master RESTORE DATABASE [{database}] FROM DISK='{fileName}' WITH REPLACE;";
-                using (var command = new SqlCommand(query, connection))
-                {
-                    command.ExecuteNonQuery();
-                }
-                query = $"USE master ALTER DATABASE [{database}] SET Multi_User";
-                using (var command = new SqlCommand(query, connection))
-                {
-                    command.ExecuteNonQuery();
-                }
+
+                string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
+                var command = new SqlCommand(query, connection);
+                command.ExecuteNonQuery();
+
+                query = $"USE master RESTORE DATABASE [{sqlConStrBuilder.InitialCatalog}] FROM DISK='{fileName}' WITH REPLACE;";
+                command = new SqlCommand(query, connection);
+                command.ExecuteNonQuery();
+
+                query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                command = new SqlCommand(query, connection);
+                command.ExecuteNonQuery();
             }
         }
 
         /// <summary>
-        /// Take backup from database
+        /// Take backup from the database and will overwrite any file with the same name
         /// </summary>
         /// <param name="conn">The connection string for the sqlserver database</param>
         /// <param name="fileName">The full path to the backup file</param>
@@ -57,14 +56,21 @@ namespace SQLServer.BaBu
 
                 string query = $"BACKUP DATABASE [{sqlConStrBuilder.InitialCatalog}] TO DISK='{backupfile}'";
 
-                using (var command = new SqlCommand(query, connection))
+                if (connection.State == System.Data.ConnectionState.Closed)
                 {
                     connection.Open();
-                    command.ExecuteNonQuery();
                 }
 
+                var command = new SqlCommand(query, connection);
+                command.ExecuteNonQuery();
+
+                query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                command = new SqlCommand(query, connection);
+                command.ExecuteNonQuery();
+
                 //moves the bakcup file from temp folder to the chosen location and name
-                File.Move(backupfile, fileName);
+                File.Copy(backupfile, fileName, true);
+                File.Delete(backupfile);
             }
         }
     }

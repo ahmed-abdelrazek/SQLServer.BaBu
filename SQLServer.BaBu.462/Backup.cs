@@ -41,11 +41,11 @@ namespace SQLServer.BaBu
         }
 
         /// <summary>
-        /// Take backup from database
+        /// Take backup from the database and will overwrite any file with the same name
         /// </summary>
         /// <param name="conn">The connection string for the sqlserver database</param>
         /// <param name="fileName">The full path to the backup file</param>
-        public static async Task BackupAsync(string conn, string fileName)
+        public static async Task TakeAsync(string conn, string fileName)
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
             using (var connection = new SqlConnection(conn))
