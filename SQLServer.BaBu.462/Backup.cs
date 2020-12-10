@@ -79,5 +79,37 @@ namespace SQLServer.BaBu
                 File.Delete(backupfile);
             }
         }
+
+        /// <summary>
+        /// Alters the database Collate
+        /// </summary>
+        /// <param name="conn">The connection string for the sqlserver database</param>
+        /// <param name="collate">the collate like Arabic_CI_AI or something</param>
+        public static async Task AlterCollateAsync(string conn, string collate)
+        {
+            var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
+            await Task.Run(() =>
+            {
+                using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
+                {
+                    if (connection.State == System.Data.ConnectionState.Closed)
+                    {
+                        connection.Open();
+                    }
+
+                    string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
+                    var command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+
+                    query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] COLLATE {collate}";
+                    command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+
+                    query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                    command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+                }
+            });
+        }
     }
 }
