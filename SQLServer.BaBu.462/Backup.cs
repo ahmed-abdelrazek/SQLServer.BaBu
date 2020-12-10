@@ -12,39 +12,32 @@ namespace SQLServer.BaBu
         /// </summary>
         /// <param name="conn">The connection string for the sqlserver database</param>
         /// <param name="fileName">The full path to the backup file</param>
-        public static async Task Restore(string conn, string fileName)
+        public static async Task RestoreAsync(string conn, string fileName)
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
-            var database = sqlConStrBuilder.InitialCatalog;
-            string query = null;
-            using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
+
+            await Task.Run(() =>
             {
-                query = $"ALTER DATABASE [{database}] SET Single_User WITH Rollback Immediate";
-                using (var command = new SqlCommand(query, connection))
+                using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
                 {
-                    await Task.Run(() =>
+                    if (connection.State == System.Data.ConnectionState.Closed)
                     {
                         connection.Open();
-                        command.ExecuteNonQuery();
-                    });
+                    }
+
+                    string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
+                    var command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+
+                    query = $"USE master RESTORE DATABASE [{sqlConStrBuilder.InitialCatalog}] FROM DISK='{fileName}' WITH REPLACE;";
+                    command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+
+                    query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                    command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
                 }
-                query = $"USE master RESTORE DATABASE [{database}] FROM DISK='{fileName}' WITH REPLACE;";
-                using (var command = new SqlCommand(query, connection))
-                {
-                    await Task.Run(() =>
-                    {
-                        command.ExecuteNonQuery();
-                    });
-                }
-                query = $"USE master ALTER DATABASE [{database}] SET Multi_User";
-                using (var command = new SqlCommand(query, connection))
-                {
-                    await Task.Run(() =>
-                    {
-                        command.ExecuteNonQuery();
-                    });
-                }
-            }
+            });
         }
 
         /// <summary>
@@ -52,32 +45,38 @@ namespace SQLServer.BaBu
         /// </summary>
         /// <param name="conn">The connection string for the sqlserver database</param>
         /// <param name="fileName">The full path to the backup file</param>
-        public static async Task Take(string conn, string fileName)
+        public static async Task BackupAsync(string conn, string fileName)
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
             using (var connection = new SqlConnection(conn))
             {
-                //creates the backup file in your windows root path in the temp folder to avoid any access issues normally C:\temp\
                 string tempFolder = $"{ Path.GetPathRoot(Environment.SystemDirectory)}temp";
                 if (!Directory.Exists(tempFolder))
                 {
                     Directory.CreateDirectory(tempFolder);
                 }
-                string backupfile = $"{tempFolder}\\Backup { DateTime.Now.ToString("yyyy-MM-dd hh-mm-ss tt")}.bak";
+
+                string backupfile = $"{tempFolder}\\Backup { DateTime.Now:yyyy-MM-dd hh-mm-ss tt}.bak";
 
                 string query = $"BACKUP DATABASE [{sqlConStrBuilder.InitialCatalog}] TO DISK='{backupfile}'";
 
-                using (var command = new SqlCommand(query, connection))
+                await Task.Run(() =>
                 {
-                    await Task.Run(() =>
+                    if (connection.State == System.Data.ConnectionState.Closed)
                     {
                         connection.Open();
-                        command.ExecuteNonQuery();
-                    });
-                }
+                    }
 
-                //moves the bakcup file from temp folder to the chosen location and name
-                File.Move(backupfile, fileName);
+                    var command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+
+                    query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                    command = new SqlCommand(query, connection);
+                    command.ExecuteNonQuery();
+                });
+
+                File.Copy(backupfile, fileName, true);
+                File.Delete(backupfile);
             }
         }
     }
