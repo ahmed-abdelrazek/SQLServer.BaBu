@@ -16,28 +16,25 @@ namespace SQLServer.BaBu
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
 
-            await Task.Run(() =>
+            using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
             {
-                using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
+                if (connection.State == System.Data.ConnectionState.Closed)
                 {
-                    if (connection.State == System.Data.ConnectionState.Closed)
-                    {
-                        connection.Open();
-                    }
-
-                    string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
-                    var command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
-
-                    query = $"USE master RESTORE DATABASE [{sqlConStrBuilder.InitialCatalog}] FROM DISK='{fileName}' WITH REPLACE;";
-                    command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
-
-                    query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
-                    command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
+                    connection.Open();
                 }
-            });
+
+                string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
+                var command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
+
+                query = $"USE master RESTORE DATABASE [{sqlConStrBuilder.InitialCatalog}] FROM DISK='{fileName}' WITH REPLACE;";
+                command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
+
+                query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
+            }
         }
 
         /// <summary>
@@ -48,6 +45,7 @@ namespace SQLServer.BaBu
         public static async Task TakeAsync(string conn, string fileName)
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
+
             using (var connection = new SqlConnection(conn))
             {
                 string tempFolder = $"{ Path.GetPathRoot(Environment.SystemDirectory)}temp";
@@ -60,20 +58,17 @@ namespace SQLServer.BaBu
 
                 string query = $"BACKUP DATABASE [{sqlConStrBuilder.InitialCatalog}] TO DISK='{backupfile}'";
 
-                await Task.Run(() =>
+                if (connection.State == System.Data.ConnectionState.Closed)
                 {
-                    if (connection.State == System.Data.ConnectionState.Closed)
-                    {
-                        connection.Open();
-                    }
+                    connection.Open();
+                }
 
-                    var command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
+                var command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
 
-                    query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
-                    command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
-                });
+                query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
 
                 File.Copy(backupfile, fileName, true);
                 File.Delete(backupfile);
@@ -88,28 +83,26 @@ namespace SQLServer.BaBu
         public static async Task AlterCollateAsync(string conn, string collate)
         {
             var sqlConStrBuilder = new SqlConnectionStringBuilder(conn);
-            await Task.Run(() =>
+
+            using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
             {
-                using (var connection = new SqlConnection(sqlConStrBuilder.ConnectionString))
+                if (connection.State == System.Data.ConnectionState.Closed)
                 {
-                    if (connection.State == System.Data.ConnectionState.Closed)
-                    {
-                        connection.Open();
-                    }
-
-                    string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
-                    var command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
-
-                    query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] COLLATE {collate}";
-                    command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
-
-                    query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
-                    command = new SqlCommand(query, connection);
-                    command.ExecuteNonQuery();
+                    connection.Open();
                 }
-            });
+
+                string query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Single_User WITH Rollback Immediate";
+                var command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
+
+                query = $"ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] COLLATE {collate}";
+                command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
+
+                query = $"USE master ALTER DATABASE [{sqlConStrBuilder.InitialCatalog}] SET Multi_User";
+                command = new SqlCommand(query, connection);
+                await command.ExecuteNonQueryAsync();
+            }
         }
     }
 }
