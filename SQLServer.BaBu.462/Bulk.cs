@@ -13,17 +13,18 @@ namespace SQLServer.BaBu
         /// </summary>
         /// <param name="connection">The connection string for the sqlserver database</param>
         /// <param name="script">The SQL string to execute</param>
-        public static async Task FromScript(string connection, string script)
+        public static async Task FromScriptAsync(string connection, string script)
         {
-            using (SqlConnection conn = new SqlConnection(connection))
+            await Task.Run(() =>
             {
-                Server db = new Server(new ServerConnection(conn));
-                string nscript = script.Trim();
-                await Task.Run(() =>
+                using (SqlConnection conn = new SqlConnection(connection))
                 {
+                    Server db = new Server(new ServerConnection(conn));
+                    string nscript = script.Trim();
+
                     db.ConnectionContext.ExecuteNonQuery(nscript);
-                });
-            }
+                }
+            });
         }
 
         /// <summary>
@@ -31,17 +32,22 @@ namespace SQLServer.BaBu
         /// </summary>
         /// <param name="connection">The connection string for the sqlserver database</param>
         /// <param name="fileName">The full path to the file that have the SQL string to execute</param>
-        public static async Task FromFile(string connection, string fileName)
+        public static async Task FromFileAsync(string connection, string fileName)
         {
-            using (SqlConnection conn = new SqlConnection(connection))
+            await Task.Run(() =>
             {
-                Server db = new Server(new ServerConnection(conn));
-                string script = File.ReadAllText(fileName).Trim();
-                await Task.Run(() =>
+                using (SqlConnection conn = new SqlConnection(connection))
                 {
-                    db.ConnectionContext.ExecuteNonQuery(script);
-                });
-            }
+                    Server db = new Server(new ServerConnection(conn));
+                    string script = File.ReadAllText(fileName);
+                    string nscript = script.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(nscript))
+                    {
+                        db.ConnectionContext.ExecuteNonQuery(nscript);
+                    }
+                }
+            });
         }
     }
 }
