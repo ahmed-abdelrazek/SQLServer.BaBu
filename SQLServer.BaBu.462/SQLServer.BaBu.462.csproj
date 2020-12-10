@@ -56,5 +56,11 @@
     <Compile Include="Bulk.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None
+        Include="$(SolutionDir)Libraries\*.*"
+        CopyToOutputDirectory="PreserveNewest"
+        TargetPath="$(TargetDir)\%(Filename)%(Extension)" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
